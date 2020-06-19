@@ -1,0 +1,158 @@
+
+from DB_Classes import *
+from time import sleep
+from time import time as timestamp
+import time
+import os
+import datetime
+
+techs = user_DB("RME_Users")
+gate_log = log_DB("Gate_Log")
+
+
+
+
+######################################################
+#                 User Menu Functions                #
+######################################################
+
+def add():
+    print("Full Name: ",end="")
+    name=input()
+    print("Login: ",end="")
+    login=input()
+    print("Scan Badge: ",end="")
+    badge=input()
+    print("Permissions: ",end="")
+    permissions=input()    
+    print(name," ",login," ",badge," ",permissions)
+    print("Correct(Y/N): ",end="")
+    state = input()
+    if state==("y" or "Y"):
+        techs.add(name,login,badge,permissions)
+    else:
+        add()
+
+def remove():
+    print("Scan Badge: ",end="")
+    badge=input()
+    techs.remove(badge)
+
+def check_user():
+    print("Scan Badge: ",end="")
+    badge=input()
+    if techs.check_user(badge):
+        print("Badge:",badge,"    Name:",techs.get_name(badge))
+    else:
+        print("Badge:",badge," not found.")
+    print("Press and key to close.....",end="")
+    input()
+        
+def check_permissions():
+    print("Scan Badge: ",end="")
+    badge=input()
+    print("Perssions Level:",techs.check_permissions(badge))
+    print("Press and key to close.....",end="")
+    input()
+
+def dump(db):
+    db.dump()
+    print("Press and key to close.....",end="")
+    input()
+    os.system('cls')
+
+def export(db,name):
+    db.export(name)
+
+def user_admin_menu():
+    print("""
+_________________________________
+1)Add User
+2)Remove User
+3)Check For User
+4)Check Permissions
+5)Display All Users
+6)Export to .csv
+7)Back to Main Menu
+_________________________________
+""")
+    state=input()
+    os.system('cls')
+    if state == "1":
+        add()
+    if state == '2':
+        remove()
+    if state == '3':
+        check_user()
+    if state == '4':
+        check_permissions()
+    if state == '5':
+        dump(techs)
+    if state == '6':
+        export(techs,"techs")
+    if state == '7':
+        main_menu()
+    os.system('cls')
+
+######################################################
+#                  Main Menu                         #
+######################################################
+def time_output():
+	time=int(timestamp())
+	output= str(datetime.datetime.fromtimestamp(time).isoformat())
+	return output.replace("T"," ")
+
+def open_gate():
+    print("Scan Badge...")
+    scan = input()
+    if techs.check_user(scan) and techs.check_permissions(scan) < 3:
+        print("Gate Open...")######################################################
+        time_in=time.time()
+        print("Name:",techs.get_name(scan),"Time: ",time_output())
+        print("Close Gate...")######################################################
+        input()
+        time_out=time.time()
+        duration = time_out - time_in
+        gate_log.add(time_output(), techs.get_name(scan), int(duration))
+        
+    else:
+        print("insufficient Pemissions...")
+
+def access_admin_menu():
+    print("Scan Badge...")
+    scan = input()
+    if techs.check_user(scan) and techs.check_permissions(scan) < 2:
+        user_admin_menu()
+    else:
+        print("Need Admin Permissions...")
+        input()
+
+def main_menu():
+    print("""
+_________________________________
+1)Open Gate
+2)Edit Users
+3)Display Records
+4)Export to .csv
+_________________________________
+""")
+    state=input()
+    os.system('cls')
+    if state == "1":
+        open_gate()
+    if state == '2':
+        access_admin_menu()
+    if state == '3':
+        dump(gate_log)
+    if state == '4':
+        export(gate_log,"Gate_Log")
+    os.system('cls')
+
+
+
+######################################################
+#                   Run Main                         #
+######################################################
+if __name__=="__main__":
+    while True:
+        main_menu()
