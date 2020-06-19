@@ -22,9 +22,6 @@ class user_DB:
             )
             ''')
         self.db.commit()
-        self.cursor.execute('''INSERT INTO users(name, login, badge, permissions)
-                          VALUES(?,?,?,?)''', (Admin, Admin, 11999, 1))
-        self.db.commit()
 
     #add a user to the DB
     def add(self,name,login,badge,permissions):
@@ -89,7 +86,7 @@ class user_DB:
     def close(self):
         self.db.close()
 
-    
+        
 
 
 ######################################################
@@ -138,3 +135,4 @@ class log_DB:
         for i in dump:
             output=str(i)
             file.write(output[1:-1]+'\n')
+        
