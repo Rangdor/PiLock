@@ -8,12 +8,15 @@ import time, datetime, os, serial
 
 techs = user_DB("RME_Users")
 gate_log = log_DB("Gate_Log")
+path = "E:\\" #Windows
+#path = " " #Linux
+
 ######################################################
 #                  Serial Functions                  #
 ######################################################
 #Init Serial Comms
-COM = "/dev/ttyACM0" #Linux
-#COM = "COM4"          #Windows
+#COM = "/dev/ttyACM0" #Linux
+COM = "COM4"          #Windows
 BAUD = 9600
 try:
     ser = serial.Serial(COM, BAUD, timeout = 0.00625)
@@ -34,14 +37,16 @@ def read_scanner():
 ######################################################
 #                Relay GPIO Functions                #
 ######################################################
-pin = 18
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(pin, GPIO.OUT)
-
+##pin = 18
+##
+##GPIO.setmode(GPIO.BCM)
+##GPIO.setup(pin, GPIO.OUT)
+##
 def relayHigh():
+    print("High")
     GPIO.output(pin, GPIO.HIGH)
 def relayLow():
+    print("Low")
     GPIO.output(pin, GPIO.LOW)
 
 
@@ -94,8 +99,9 @@ def dump(db):
     input()
     os.system('clear')
 
-def export(db,name):
-    db.export(name)
+def export(db,name,path):
+    print(str(path)+name)
+    db.export(path+name)
 
 def user_admin_menu():
     print("""
@@ -122,7 +128,7 @@ _________________________________
     if state == '5':
         dump(techs)
     if state == '6':
-        export(techs,"techs")
+        export(techs,"techs",path)
     if state == '7':
         main_menu()
     os.system('clear')
@@ -141,7 +147,10 @@ def open_gate():
     if techs.check_user(scan) and techs.check_permissions(scan) < 3:
         print("Gate Open...")######################################################
         time_in=time.time()
+        relayHigh()
         print("Name:",techs.get_name(scan),"Time: ",time_output())
+        sleep(3)
+        relayLow()
         print("Close Gate...")######################################################
         input()
         time_out=time.time()
@@ -195,7 +204,7 @@ _________________________________
     if state == '3':
         dump(gate_log)
     if state == '4':
-        export(gate_log,"Gate_Log")
+        export(gate_log,"Gate_Log",path)
     os.system('clear')
 
 
