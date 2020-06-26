@@ -2,14 +2,47 @@
 from DB_Classes import *
 from time import sleep
 from time import time as timestamp
-import time
-import os
-import datetime
+#import RPi.GPIO as GPIO
+import time, datetime, os, serial
+
 
 techs = user_DB("RME_Users")
 gate_log = log_DB("Gate_Log")
+######################################################
+#                  Serial Functions                  #
+######################################################
+#Init Serial Comms
+COM = "/dev/ttyACM0" #Linux
+#COM = "COM4"          #Windows
+BAUD = 9600
+try:
+    ser = serial.Serial(COM, BAUD, timeout = 0.00625)
+except:
+    print("Scanner Unavailable")
+    input()
 
 
+#Read serial line and write to log
+def read_scanner():  
+        while True:
+                val = str(ser.readline().decode('ascii'))
+                if len(val) > 5:
+                        print()
+                        return val
+                        break
+
+######################################################
+#                Relay GPIO Functions                #
+######################################################
+pin = 18
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(pin, GPIO.OUT)
+
+def relayHigh():
+    GPIO.output(pin, GPIO.HIGH)
+def relayLow():
+    GPIO.output(pin, GPIO.LOW)
 
 
 ######################################################
@@ -22,7 +55,7 @@ def add():
     print("Login: ",end="")
     login=input()
     print("Scan Badge: ",end="")
-    badge=input()
+    badge=read_scanner()
     print("Permissions: ",end="")
     permissions=input()    
     print(name," ",login," ",badge," ",permissions)
@@ -35,12 +68,12 @@ def add():
 
 def remove():
     print("Scan Badge: ",end="")
-    badge=input()
+    badge=read_scanner()
     techs.remove(badge)
 
 def check_user():
     print("Scan Badge: ",end="")
-    badge=input()
+    badge=read_scanner()
     if techs.check_user(badge):
         print("Badge:",badge,"    Name:",techs.get_name(badge))
     else:
@@ -50,7 +83,7 @@ def check_user():
         
 def check_permissions():
     print("Scan Badge: ",end="")
-    badge=input()
+    badge=read_scanner()
     print("Perssions Level:",techs.check_permissions(badge))
     print("Press and key to close.....",end="")
     input()
@@ -104,7 +137,7 @@ def time_output():
 
 def open_gate():
     print("Scan Badge...")
-    scan = input()
+    scan = read_scanner()
     if techs.check_user(scan) and techs.check_permissions(scan) < 3:
         print("Gate Open...")######################################################
         time_in=time.time()
@@ -119,13 +152,30 @@ def open_gate():
         print("insufficient Pemissions...")
 
 def access_admin_menu():
-    print("Scan Badge...")
-    scan = input()
-    if techs.check_user(scan) and techs.check_permissions(scan) < 2:
-        user_admin_menu()
-    else:
-        print("Need Admin Permissions...")
-        input()
+    print("""
+_________________________________
+1) Badge
+2) Keyboard
+_________________________________
+""")
+    state=input()
+
+    if(state == '1'):
+        print("Scan Badge...")
+        scan = read_scanner()
+        if techs.check_user(scan) and techs.check_permissions(scan) < 2:
+            user_admin_menu()
+        else:
+            print("Need Admin Permissions...")
+            input()
+    elif(state == '2'):
+        print("Enter Admin Account...")
+        scan = input()
+        if techs.check_user(scan) and techs.check_permissions(scan) < 2:
+            user_admin_menu()
+        else:
+            print("Need Admin Permissions...")
+            input()
 
 def main_menu():
     print("""
