@@ -5,9 +5,10 @@ from time import time as timestamp
 #import RPi.GPIO as GPIO
 import time, datetime, os, serial
 
-
 techs = user_DB("RME_Users")
 gate_log = log_DB("Gate_Log")
+
+
 path = "E:\\" #Windows
 #path = " " #Linux
 
@@ -15,14 +16,15 @@ path = "E:\\" #Windows
 #                  Serial Functions                  #
 ######################################################
 #Init Serial Comms
-#COM = "/dev/ttyACM0" #Linux
-COM = "COM4"          #Windows
-BAUD = 9600
-try:
-    ser = serial.Serial(COM, BAUD, timeout = 0.00625)
-except:
-    print("Scanner Unavailable")
-    input()
+def start_scanner():
+    #COM = "/dev/ttyACM0" #Linux
+    COM = "COM4"          #Windows
+    BAUD = 9600
+    try:
+        ser = serial.Serial(COM, BAUD, timeout = 0.00625)
+    except:
+        print("Scanner Unavailable")
+        input()
 
 
 #Read serial line and write to log
@@ -38,16 +40,17 @@ def read_scanner():
 #                Relay GPIO Functions                #
 ######################################################
 ##pin = 18
-##
+##switch = 17
 ##GPIO.setmode(GPIO.BCM)
 ##GPIO.setup(pin, GPIO.OUT)
+##GPIO.setup(switch, GPIO.IN)
 ##
 def relayHigh():
     print("High")
-    GPIO.output(pin, GPIO.HIGH)
+    #GPIO.output(pin, GPIO.HIGH)
 def relayLow():
     print("Low")
-    GPIO.output(pin, GPIO.LOW)
+    #GPIO.output(pin, GPIO.LOW)
 
 
 ######################################################
@@ -60,6 +63,7 @@ def add():
     print("Login: ",end="")
     login=input()
     print("Scan Badge: ",end="")
+    sleep(.5)
     badge=read_scanner()
     print("Permissions: ",end="")
     permissions=input()    
@@ -145,14 +149,16 @@ def open_gate():
     print("Scan Badge...")
     scan = read_scanner()
     if techs.check_user(scan) and techs.check_permissions(scan) < 3:
-        print("Gate Open...")######################################################
+        print("Gate Open...")
         time_in=time.time()
-        relayHigh()
-        print("Name:",techs.get_name(scan),"Time: ",time_output())
-        sleep(3)
         relayLow()
-        print("Close Gate...")######################################################
-        input()
+        print("Name:",techs.get_name(scan),"Time: ",time_output())
+        sleep(5)
+        relayHigh()
+        while(1):
+            if(GPIO.input(switch)==GPIO.LOW):
+                time_out=time.time()
+                break
         time_out=time.time()
         duration = time_out - time_in
         gate_log.add(time_output(), techs.get_name(scan), int(duration))
@@ -193,6 +199,7 @@ _________________________________
 2)Edit Users
 3)Display Records
 4)Export to .csv
+5)Restart Scanner
 _________________________________
 """)
     state=input()
@@ -205,6 +212,8 @@ _________________________________
         dump(gate_log)
     if state == '4':
         export(gate_log,"Gate_Log",path)
+    if state == '5':
+        start_scanner()
     os.system('clear')
 
 
@@ -214,5 +223,12 @@ _________________________________
 ######################################################
 if __name__=="__main__":
     while True:
+        start_scanner()
         techs.add("Admin","Admin","11999","1")
+        relayHigh()
         main_menu()
+
+
+
+
+    
