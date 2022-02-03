@@ -66,7 +66,7 @@ class user_DB:
 
     #export DB as CSV
     def export(self,filename):
-        file= open(filename+".csv","a")
+        file= open(filename+".csv","w")
         self.cursor.execute("SELECT * FROM users")
         dump=self.cursor.fetchall()
         for i in dump:
@@ -129,7 +129,7 @@ class log_DB:
 
     #export DB as CSV
     def export(self,filename):
-        file= open(filename+".csv","a")
+        file= open(filename+".csv","w")
         self.cursor.execute("SELECT * FROM GateLog")
         dump=self.cursor.fetchall()
         for i in dump:
